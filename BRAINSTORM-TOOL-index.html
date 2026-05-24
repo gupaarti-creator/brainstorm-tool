@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Product War Room</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { min-height: 100vh; background: #0c0c18; color: #eee; font-family: Georgia, serif; }
+
+  /* HEADER */
+  header { border-bottom: 1px solid rgba(255,255,255,0.07); padding: 20px 20px 16px; background: rgba(12,12,24,0.95); position: sticky; top: 0; z-index: 10; backdrop-filter: blur(10px); }
+  header .eyebrow { font-size: 9px; letter-spacing: 4px; color: #555; font-family: monospace; text-transform: uppercase; margin-bottom: 4px; }
+  header h1 { font-size: 18px; color: #fff; font-weight: 400; }
+
+  /* MAIN */
+  main { max-width: 700px; margin: 0 auto; padding: 28px 16px 80px; }
+
+  /* INPUT SCREEN */
+  #inputScreen { text-align: center; padding: 40px 0 0; }
+  #inputScreen .tagline { font-size: 13px; color: #555; line-height: 1.8; margin-bottom: 28px; }
+  .input-wrap { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 16px; margin-bottom: 16px; text-align: left; }
+  .input-wrap label { font-size: 9px; letter-spacing: 3px; color: #555; font-family: monospace; text-transform: uppercase; display: block; margin-bottom: 8px; }
+  #topicInput { width: 100%; background: transparent; border: none; outline: none; font-size: 15px; color: #fff; font-family: Georgia, serif; resize: none; line-height: 1.6; min-height: 60px; }
+  #topicInput::placeholder { color: #333; }
+  .presets { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 24px; }
+  .preset { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 5px 12px; font-size: 11px; color: #777; cursor: pointer; font-family: monospace; transition: all 0.2s; }
+  .preset:hover { border-color: rgba(124,58,237,0.4); color: #aaa; }
+  #startBtn { background: linear-gradient(135deg,#7C3AED,#0369A1); border: none; border-radius: 36px; padding: 13px 36px; color: #fff; font-size: 14px; cursor: pointer; font-family: monospace; letter-spacing: 1px; box-shadow: 0 0 24px rgba(124,58,237,0.35); }
+  #startBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* AGENTS */
+  .agents-row { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 20px; justify-content: center; }
+  .agent-tag { display: flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.04); border-radius: 20px; padding: 3px 10px; font-size: 10px; }
+
+  /* SESSION HEADER */
+  #sessionHeader { display: none; margin-bottom: 20px; }
+  #sessionHeader .topic-label { font-size: 9px; letter-spacing: 3px; color: #555; font-family: monospace; text-transform: uppercase; margin-bottom: 5px; }
+  #sessionHeader .topic-text { font-size: 16px; color: #fff; line-height: 1.5; }
+
+  /* ERROR */
+  #errorBox { background: rgba(220,38,38,0.1); border: 1px solid rgba(220,38,38,0.3); border-radius: 9px; padding: 11px 13px; margin-bottom: 16px; font-size: 12px; color: #FECACA; line-height: 1.7; font-family: monospace; display: none; }
+
+  /* PROGRESS */
+  #progressBar { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 8px 12px; margin-bottom: 14px; font-size: 11px; color: #777; font-family: monospace; display: none; align-items: center; gap: 8px; }
+  .dot { color: #7C3AED; }
+
+  /* MESSAGES */
+  .round-block { margin-bottom: 24px; }
+  .round-label { font-size: 8px; letter-spacing: 4px; color: #333; text-transform: uppercase; font-family: monospace; margin-bottom: 9px; padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  .msg { border-radius: 0 8px 8px 0; padding: 10px 13px; margin-bottom: 8px; animation: fadeIn 0.35s ease; background: rgba(255,255,255,0.03); }
+  .msg-header { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; font-family: monospace; }
+  .msg-name { font-size: 10px; font-weight: 600; }
+  .msg-role { font-size: 9px; color: #333; }
+  .msg p { font-size: 13px; line-height: 1.8; color: #ccc; }
+
+  /* SYNTHESIS */
+  #synthesisBox { background: rgba(124,58,237,0.07); border: 1px solid rgba(124,58,237,0.2); border-radius: 10px; padding: 18px; margin-top: 8px; display: none; }
+  .syn-label { font-size: 8px; letter-spacing: 4px; color: #7C3AED; text-transform: uppercase; font-family: monospace; margin-bottom: 12px; }
+  #synthesisText { font-size: 13px; line-height: 1.95; color: #ddd; white-space: pre-wrap; }
+
+  /* BOTTOM ACTIONS */
+  #bottomActions { display: none; text-align: center; margin-top: 24px; gap: 10px; flex-direction: column; align-items: center; }
+  #newTopicBtn { background: linear-gradient(135deg,#7C3AED,#0369A1); border: none; border-radius: 36px; padding: 11px 28px; color: #fff; font-size: 12px; cursor: pointer; font-family: monospace; letter-spacing: 1px; }
+  #runAgainBtn { background: transparent; border: 1px solid rgba(255,255,255,0.09); border-radius: 24px; padding: 8px 20px; color: #555; font-size: 11px; cursor: pointer; font-family: monospace; }
+
+  @keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="eyebrow">Product War Room</div>
+  <h1>AI Agent Brainstorm</h1>
+</header>
+<main>
+  <div id="errorBox"></div>
+
+  <!-- INPUT SCREEN -->
+  <div id="inputScreen">
+    <p class="tagline">Type any product idea. 4 AI agents will debate,<br/>challenge, and converge on a sharpened concept.</p>
+    <div class="input-wrap">
+      <label>Your product idea</label>
+      <textarea id="topicInput" placeholder="e.g. A kids learning app unlike anything in market..."></textarea>
+    </div>
+    <div class="presets">
+      <div class="preset" onclick="setTopic('A kids learning app unlike anything in market')">Kids learning app</div>
+      <div class="preset" onclick="setTopic('A family chore and rewards app')">Family chore app</div>
+      <div class="preset" onclick="setTopic('A faith-based daily learning app for kids')">Faith app for kids</div>
+      <div class="preset" onclick="setTopic('A DFW birthday party venue discovery app')">Party venue finder</div>
+      <div class="preset" onclick="setTopic('A neighborhood laundromat and social lounge')">Laundromat lounge</div>
+    </div>
+    <button id="startBtn" onclick="startSession()">▶ START BRAINSTORM</button>
+    <div class="agents-row" id="agentTags"></div>
+  </div>
+
+  <!-- SESSION VIEW -->
+  <div id="sessionHeader">
+    <div class="topic-label">Brainstorming</div>
+    <div class="topic-text" id="sessionTopic"></div>
+  </div>
+  <div id="progressBar"><span class="dot">●</span><span id="progressText"></span></div>
+  <div id="messages"></div>
+  <div id="synthesisBox">
+    <div class="syn-label">✦ Synthesized Concept</div>
+    <div id="synthesisText"></div>
+  </div>
+  <div id="bottomActions">
+    <button id="newTopicBtn" onclick="reset()">▶ New Brainstorm</button>
+    <button id="runAgainBtn" onclick="runAgain()">↺ Same Topic, Fresh Take</button>
+  </div>
+</main>
+
+<script>
+const AGENTS = [
+  { id:"visionary", name:"The Visionary", emoji:"🔭", role:"Blue-sky thinker", color:"#7C3AED",
+    system:`You are "The Visionary" - a bold product thinker who dreams up concepts 10 years ahead. Be concrete, surprising, and specific. 3-4 sentences, no bullets.` },
+  { id:"skeptic", name:"The Skeptic", emoji:"🔍", role:"Reality checker", color:"#DC2626",
+    system:`You are "The Skeptic" - you poke holes, ask who is already doing this, and demand real differentiation. Be direct and pointed. 3-4 sentences, no bullets.` },
+  { id:"child", name:"The Child Whisperer", emoji:"🧒", role:"Child dev expert", color:"#D97706",
+    system:`You are "The Child Whisperer" - a child development expert who speaks for 5-10 year olds. What do kids actually find magical vs boring? Be warm and specific. 3-4 sentences, no bullets.` },
+  { id:"builder", name:"The Builder", emoji:"⚙️", role:"Tech realist", color:"#0369A1",
+    system:`You are "The Builder" - a pragmatic engineer-turned-PM. What is actually buildable now? What does v1 ship in 8 weeks? Be grounded and specific. 3-4 sentences, no bullets.` }
+];
+const LABELS = ["Round 1: First Take","Round 2: React & Build","Round 3: Converge"];
+
+// Render agent tags
+const tagsEl = document.getElementById("agentTags");
+AGENTS.forEach(a => {
+  tagsEl.innerHTML += `<div class="agent-tag" style="border:1px solid ${a.color}40">${a.emoji} <span style="color:${a.color};font-family:monospace">${a.name}</span></div>`;
+});
+
+let currentTopic = "";
+
+function setTopic(t) {
+  document.getElementById("topicInput").value = t;
+}
+
+function getInstruction(roundIdx, agent, history) {
+  if (roundIdx === 0) return 'The product idea is: "' + currentTopic + '". Give your bold initial take. Be specific.';
+  if (roundIdx === 1) {
+    const others = history.filter(m => m.agentId !== agent.id).map(m => m.agentName + ": " + m.text).join("\n");
+    return "Round 1 from your colleagues:\n" + others + "\n\nReact to what you heard. Build on it, challenge it, or redirect. Be specific.";
+  }
+  const r2 = history.filter(m => m.round === 2).map(m => m.agentName + ": " + m.text).join("\n");
+  return "Round 2 discussion:\n" + r2 + "\n\nNow converge. One sentence: what is the core product concept? Then: what one thing makes it truly unlike anything in market?";
+}
+
+async function callProxy(system, userMsg) {
+  const body = { model: "claude-sonnet-4-5", max_tokens: 350, messages: [{ role: "user", content: userMsg }] };
+  if (system) body.system = system;
+  const res = await fetch("/api/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+  const data = await res.json();
+  if (!res.ok || data.error) throw new Error((data.error && data.error.message) || "HTTP " + res.status);
+  const block = (data.content || []).find(b => b.type === "text");
+  if (!block) throw new Error("No text in response");
+  return block.text;
+}
+
+function showError(msg) {
+  const el = document.getElementById("errorBox");
+  el.textContent = "⚠️ " + msg;
+  el.style.display = "block";
+}
+function hideError() { document.getElementById("errorBox").style.display = "none"; }
+
+function setProgress(txt) {
+  const bar = document.getElementById("progressBar");
+  if (txt) { bar.style.display = "flex"; document.getElementById("progressText").textContent = txt; }
+  else { bar.style.display = "none"; }
+}
+
+function appendMsg(msg) {
+  const a = AGENTS.find(x => x.id === msg.agentId);
+  const msgsEl = document.getElementById("messages");
+  let roundBlock = document.getElementById("round-" + msg.round);
+  if (!roundBlock) {
+    roundBlock = document.createElement("div");
+    roundBlock.className = "round-block";
+    roundBlock.id = "round-" + msg.round;
+    roundBlock.innerHTML = '<div class="round-label">' + LABELS[msg.round - 1] + '</div>';
+    msgsEl.appendChild(roundBlock);
+  }
+  const div = document.createElement("div");
+  div.className = "msg";
+  div.style.borderLeft = "3px solid " + a.color;
+  div.innerHTML = `<div class="msg-header"><span>${a.emoji}</span><span class="msg-name" style="color:${a.color}">${a.name}</span><span class="msg-role">· ${a.role}</span></div><p></p>`;
+  div.querySelector("p").textContent = msg.text;
+  roundBlock.appendChild(div);
+  div.scrollIntoView({ behavior: "smooth", block: "end" });
+}
+
+async function runSession() {
+  const history = [];
+  try {
+    for (let r = 0; r < 3; r++) {
+      for (let ai = 0; ai < AGENTS.length; ai++) {
+        const agent = AGENTS[ai];
+        setProgress(LABELS[r] + " — " + agent.emoji + " " + agent.name + " thinking...");
+        const text = await callProxy(agent.system, getInstruction(r, agent, history));
+        const msg = { agentId: agent.id, agentName: agent.name, round: r + 1, text };
+        history.push(msg);
+        appendMsg(msg);
+      }
+    }
+    setProgress("Synthesizing final concept...");
+    const allText = history.map(m => "[" + m.agentName + " R" + m.round + "]: " + m.text).join("\n\n");
+    const synth = await callProxy(null,
+      'You are a senior product strategist. The idea being brainstormed: "' + currentTopic + '"\n\nMulti-agent discussion:\n\n' + allText +
+      "\n\nSynthesize into a sharp product brief:\n**One-line pitch:** ...\n**Core differentiator:** ...\n**Magic moment for the user:** ...\n**MVP scope:** ..."
+    );
+    document.getElementById("synthesisText").textContent = synth;
+    document.getElementById("synthesisBox").style.display = "block";
+  } catch(e) {
+    showError("Something went wrong: " + e.message);
+  }
+  setProgress("");
+  document.getElementById("bottomActions").style.display = "flex";
+  document.getElementById("startBtn").disabled = false;
+}
+
+function startSession() {
+  const topic = document.getElementById("topicInput").value.trim();
+  if (!topic) { showError("Please enter a product idea first."); return; }
+  currentTopic = topic;
+  hideError();
+  document.getElementById("inputScreen").style.display = "none";
+  document.getElementById("sessionHeader").style.display = "block";
+  document.getElementById("sessionTopic").textContent = topic;
+  document.getElementById("messages").innerHTML = "";
+  document.getElementById("synthesisBox").style.display = "none";
+  document.getElementById("bottomActions").style.display = "none";
+  document.getElementById("startBtn").disabled = true;
+  runSession();
+}
+
+function runAgain() {
+  hideError();
+  document.getElementById("messages").innerHTML = "";
+  document.getElementById("synthesisBox").style.display = "none";
+  document.getElementById("bottomActions").style.display = "none";
+  runSession();
+}
+
+function reset() {
+  hideError();
+  currentTopic = "";
+  document.getElementById("inputScreen").style.display = "block";
+  document.getElementById("sessionHeader").style.display = "none";
+  document.getElementById("messages").innerHTML = "";
+  document.getElementById("synthesisBox").style.display = "none";
+  document.getElementById("bottomActions").style.display = "none";
+  document.getElementById("topicInput").value = "";
+}
+</script>
+</body>
+</html>
